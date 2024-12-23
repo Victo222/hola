@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Horario Chileno</title>
+    <title>INTARRIVO S.A - Horarios de Microbuses</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @keyframes fadeOut {
@@ -13,32 +13,44 @@
         .fade-out {
             animation: fadeOut 8s ease-out forwards;
         }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-r from-blue-400 to-purple-500 p-8">
-    <div class="container mx-auto bg-white rounded-lg shadow-lg p-6">
-        <h1 class="text-4xl font-bold mb-6 text-center text-gray-800">Horarios </h1>
-        <div id="current-time" class="text-3xl mb-8 text-center text-gray-700"></div>
-        <table class="w-full">
-            <thead>
-                <tr class="bg-gray-100">
-                    <th class="text-lg p-2 text-left">Número de máquina</th>
-                    <th class="text-lg p-2 text-left">Hora de salida</th>
-                </tr>
-            </thead>
-            <tbody id="machine-list"></tbody>
-        </table>
+<body class="min-h-screen bg-gradient-to-br from-blue-800 to-indigo-900 p-8">
+    <div class="container mx-auto bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl shadow-2xl p-8">
+        <h1 class="text-5xl font-extrabold mb-8 text-center text-yellow-400 tracking-wider">INTARRIVO S.A</h1>
+        <h2 class="text-3xl font-bold mb-6 text-center text-white">Horarios de Microbuses</h2>
+        <div id="current-time" class="text-2xl mb-8 text-center text-blue-200 font-semibold"></div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-blue-600 bg-opacity-50">
+                        <th class="text-lg p-3 text-left text-white">Número de Micro</th>
+                        <th class="text-lg p-3 text-left text-white">Hora de Salida</th>
+                    </tr>
+                </thead>
+                <tbody id="machine-list" class="bg-black bg-opacity-20"></tbody>
+            </table>
+        </div>
     </div>
 
     <script>
         let machines = [
-            { number: '009', departureTime: '17:30' },
-            { number: '015', departureTime: '17:32' },
-            { number: '023', departureTime: '17:34' },
-            { number: '007', departureTime: '17:36' },
-            { number: '031', departureTime: '17:38' },
-            { number: '002', departureTime: '17:40' },
-            { number: '004', departureTime: '17:42' }
+            { number: '004', departureTime: '14:30' },
+            { number: '004', departureTime: '14:32' },
+            { number: '004', departureTime: '14:34' },
+            { number: '004', departureTime: '14:36' },
+            { number: '004', departureTime: '14:38' },
+            { number: '004', departureTime: '14:40' },
+            { number: '004', departureTime: '14:42' },
+            { number: '004', departureTime: '14:44' },
+            { number: '004', departureTime: '14:46' }
         ];
 
         function formatTime(date) {
@@ -71,15 +83,16 @@
             const machineListElement = document.getElementById('machine-list');
             machineListElement.innerHTML = '';
 
-            machines.forEach(machine => {
+            machines.forEach((machine, index) => {
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50';
+                row.className = 'hover:bg-blue-500 hover:bg-opacity-30 transition-colors duration-300';
                 row.innerHTML = `
-                    <td class="text-lg p-2">${machine.number}</td>
-                    <td class="text-lg p-2 flex items-center">
-                        <span class="departure-time" data-time="${machine.departureTime}" data-machine="${machine.number}">${machine.departureTime}</span>
+                    <td class="text-lg p-3 text-white">${machine.number}</td>
+                    <td class="text-lg p-3 flex items-center">
+                        <span class="departure-time text-white" data-time="${machine.departureTime}" data-machine="${machine.number}">${machine.departureTime}</span>
                     </td>
                 `;
+                row.setAttribute('data-index', index);
                 machineListElement.appendChild(row);
             });
         }
@@ -90,19 +103,20 @@
                 const departureTime = element.dataset.time;
                 const { showAlert, isImmediate } = isAlertTime(departureTime);
                 
-                element.classList.toggle('text-red-600', isImmediate);
+                element.classList.toggle('text-yellow-300', isImmediate);
                 element.classList.toggle('font-bold', isImmediate);
+                element.classList.toggle('pulse', isImmediate);
 
                 const alertIcon = element.nextElementSibling;
                 if (showAlert && !alertIcon) {
                     const icon = document.createElement('span');
-                    icon.className = 'ml-2 text-yellow-500';
+                    icon.className = 'ml-2 text-red-500';
                     icon.innerHTML = '&#9888;'; // Unicode for warning triangle
                     element.parentNode.appendChild(icon);
 
                     // Announce the departure
                     const machineNumber = element.dataset.machine;
-                    announceVoice(`Máquina ${machineNumber} sale a las ${departureTime}`);
+                    announceVoice(`Micro ${machineNumber} sale a las ${departureTime}`);
                 } else if (!showAlert && alertIcon) {
                     alertIcon.remove();
                 }
@@ -116,11 +130,11 @@
                 const departureTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
                 
                 if (now >= departureTime) {
-                    const row = document.querySelector(`#machine-list tr:nth-child(${index + 1})`);
+                    const row = document.querySelector(`#machine-list tr[data-index="${index}"]`);
                     if (row && !row.classList.contains('fade-out')) {
                         row.classList.add('fade-out');
                         setTimeout(() => {
-                            machines = machines.filter(m => m.number !== machine.number);
+                            machines.splice(index, 1);
                             renderMachines();
                         }, 8000);
                     }
